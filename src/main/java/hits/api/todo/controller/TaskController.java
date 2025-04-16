@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/task")
@@ -29,5 +31,22 @@ public class TaskController {
     public ResponseEntity<Void> delete(@PathVariable String id){
         service.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/completed/{id}")
+    public ResponseEntity<Void> completed(@PathVariable String id){
+        service.completed(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/uncompleted/{id}")
+    public ResponseEntity<Void> uncompleted(@PathVariable String id){
+        service.uncompleted(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/all")
+    public List<TaskResponseDTO> allTasks(){
+        return service.findAll();
     }
 }
