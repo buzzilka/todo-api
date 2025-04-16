@@ -10,7 +10,7 @@ import java.util.Date;
 @Data
 public class TaskRequestDTO {
     @NotNull
-    @Size(min = 4)
+    @Size(min = 4, message = "Title length cannot be less than 4 characters")
     private String title;
 
     private String description;

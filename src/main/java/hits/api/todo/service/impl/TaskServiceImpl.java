@@ -6,9 +6,11 @@ import hits.api.todo.dto.response.TaskResponseDTO;
 import hits.api.todo.entity.TaskEntity;
 import hits.api.todo.enums.TaskPriority;
 import hits.api.todo.enums.TaskStatus;
+import hits.api.todo.exeption.AppException;
 import hits.api.todo.repository.TaskRepository;
 import hits.api.todo.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -24,10 +26,8 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDTO create(TaskRequestDTO dto) {
         TaskEntity entity = mapper.toEntity(dto);
 
-        Date now = new Date();
-
-        if (entity.getDeadline() != null && entity.getDeadline().before(now)){
-            throw new IllegalStateException("You cannot create a task with an expired deadline");
+        if (entity.getDeadline() != null && entity.getDeadline().before(getCurrentDate())){
+            throw new AppException("You cannot create a task with an expired deadline", HttpStatus.BAD_REQUEST);
         }
 
         if (entity.getDescription().isBlank()){
@@ -46,12 +46,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponseDTO update(String id, TaskRequestDTO dto) {
         TaskEntity task = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
 
-        Date now = new Date();
 
         if(task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.LATE){
-            throw new IllegalStateException("You cannot edit a completed task");
+            throw new AppException("You cannot edit a completed task", HttpStatus.BAD_REQUEST);
         }
 
         task.setTitle(dto.getTitle());
@@ -68,7 +67,7 @@ public class TaskServiceImpl implements TaskService {
             task.setPriority(dto.getPriority());
         }
 
-        if (task.getDeadline() != null && now.before(task.getDeadline())){
+        if (task.getDeadline() != null && getCurrentDate().before(task.getDeadline())){
             task.setStatus(TaskStatus.ACTIVE);
         } else {
             task.setStatus(TaskStatus.OVERDUE);
@@ -88,7 +87,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void delete(String id) {
         TaskEntity task = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
 
         repository.delete(task);
     }
@@ -96,11 +95,9 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void completed(String id) {
         TaskEntity task = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
 
-        Date now = new Date();
-
-        if (task.getDeadline() == null || now.before(task.getDeadline())) {
+        if (task.getDeadline() == null || getCurrentDate().before(task.getDeadline())) {
             task.setStatus(TaskStatus.COMPLETED);
         } else {
             task.setStatus(TaskStatus.LATE);
@@ -112,16 +109,19 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void uncompleted(String id) {
         TaskEntity task = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
 
-        Date now = new Date();
 
-        if (task.getDeadline() == null || now.before(task.getDeadline())){
+        if (task.getDeadline() == null || getCurrentDate().before(task.getDeadline())){
             task.setStatus(TaskStatus.ACTIVE);
         } else {
             task.setStatus(TaskStatus.OVERDUE);
         }
 
         repository.save(task);
+    }
+
+    private Date getCurrentDate(){
+        return new Date();
     }
 }

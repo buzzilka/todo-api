@@ -7,9 +7,14 @@ import java.util.List;
 
 public interface TaskService {
     TaskResponseDTO create(TaskRequestDTO dto);
+
     TaskResponseDTO update(String id, TaskRequestDTO dto);
+
     List<TaskResponseDTO> findAll();
+
     void delete(String id);
+
     void completed(String id);
+
     void uncompleted(String id);
 }
