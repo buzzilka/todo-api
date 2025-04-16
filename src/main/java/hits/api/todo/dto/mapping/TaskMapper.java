@@ -6,7 +6,7 @@ import hits.api.todo.entity.TaskEntity;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
-public interface TaskRequestMapper {
+public interface TaskMapper {
     TaskEntity toEntity(TaskRequestDTO dto);
     TaskResponseDTO toDTO(TaskEntity entity);
 }
