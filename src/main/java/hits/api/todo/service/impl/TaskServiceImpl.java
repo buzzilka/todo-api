@@ -49,7 +49,6 @@ public class TaskServiceImpl implements TaskService {
         TaskEntity task = repository.findById(id)
                 .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
 
-
         if(task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.LATE){
             throw new AppException("You cannot edit a completed task", HttpStatus.BAD_REQUEST);
         }
@@ -137,7 +136,6 @@ public class TaskServiceImpl implements TaskService {
     public void uncompleted(String id) {
         TaskEntity task = repository.findById(id)
                 .orElseThrow(() -> new AppException("Task not found", HttpStatus.NOT_FOUND));
-
 
         if (task.getDeadline() == null || getCurrentDate().before(task.getDeadline())){
             task.setStatus(TaskStatus.ACTIVE);
