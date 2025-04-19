@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -26,10 +27,6 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDTO create(TaskRequestDTO dto) {
         TaskEntity entity = mapper.toEntity(dto);
 
-        if (entity.getDeadline() != null && entity.getDeadline().before(getCurrentDate())){
-            throw new AppException("You cannot create a task with an expired deadline", HttpStatus.BAD_REQUEST);
-        }
-
         if (entity.getDescription().isBlank()){
             entity.setDescription(null);
         }
@@ -38,7 +35,11 @@ public class TaskServiceImpl implements TaskService {
             entity.setPriority(TaskPriority.MEDIUM);
         }
 
-        entity.setStatus(TaskStatus.ACTIVE);
+        if (entity.getDeadline() != null && entity.getDeadline().before(getCurrentDate())){
+            entity.setStatus(TaskStatus.OVERDUE);
+        } else {
+            entity.setStatus(TaskStatus.ACTIVE);
+        }
 
         return mapper.toDTO(repository.save(entity));
     }
@@ -77,12 +78,38 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<TaskResponseDTO> findAll() {
+    public List<TaskResponseDTO> findAll(String sortByCreatedAt,
+                                         TaskPriority filterByPriority,
+                                         TaskStatus filterByStatus) {
         List<TaskEntity> tasks = repository.findAll();
+
+        if (filterByPriority != null) {
+            tasks = tasks.stream()
+                    .filter(task -> task.getPriority() == filterByPriority)
+                    .toList();
+        }
+
+        if (filterByStatus != null){
+            tasks = tasks.stream()
+                    .filter(task -> task.getStatus() == filterByStatus)
+                    .toList();
+        }
+
+        if (sortByCreatedAt.equalsIgnoreCase("asc")) {
+            tasks = tasks.stream()
+                    .sorted(Comparator.comparing(TaskEntity::getCreateDate))
+                    .toList();
+        } else if (sortByCreatedAt.equalsIgnoreCase("desc")) {
+            tasks = tasks.stream()
+                    .sorted(Comparator.comparing(TaskEntity::getCreateDate).reversed())
+                    .toList();
+        }
+
         return tasks.stream()
                 .map(mapper::toDTO)
                 .toList();
     }
+
 
     @Override
     public void delete(String id) {

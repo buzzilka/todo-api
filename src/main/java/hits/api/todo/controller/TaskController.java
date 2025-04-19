@@ -2,6 +2,8 @@ package hits.api.todo.controller;
 
 import hits.api.todo.dto.request.TaskRequestDTO;
 import hits.api.todo.dto.response.TaskResponseDTO;
+import hits.api.todo.enums.TaskPriority;
+import hits.api.todo.enums.TaskStatus;
 import hits.api.todo.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +48,11 @@ public class TaskController {
     }
 
     @GetMapping("/all")
-    public List<TaskResponseDTO> allTasks(){
-        return service.findAll();
+    public List<TaskResponseDTO> allTasks(
+            @RequestParam(required = false, defaultValue = "desc") String sortByCreatedAt,
+            @RequestParam(required = false) TaskPriority filterByPriority,
+            @RequestParam(required = false)TaskStatus filterByStatus
+            ){
+        return service.findAll(sortByCreatedAt, filterByPriority, filterByStatus);
     }
 }
